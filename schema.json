@@ -1,0 +1,250 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "title": "@runnerty-executor-sqlserver",
+  "definitions": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "pattern": "@runnerty-executor-sqlserver"
+        },
+        "user": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "crypted_password": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "debug": {
+          "type": "boolean"
+        },
+        "encrypt":{
+          "type": "boolean"
+        },
+        "noReturnDataOutput":{
+          "type": "boolean"
+        },
+        "csvFileExport": {
+          "type": "string"
+        },
+        "csvOptions": {
+          "type": "object",
+          "properties" :{
+            "objectMode": {
+              "type": "boolean"
+              },
+              "headers": {
+                "type": ["boolean", "array"]
+              },
+              "ignoreEmpty": {
+                "type": "boolean"
+              },
+              "discardUnmappedColumns": {
+                "type": "boolean"
+              },
+              "strictColumnHandling": {
+                "type": "boolean"
+              },
+              "renameHeaders": {
+                "type": "boolean"
+              },
+              "delimiter": {
+                "type": "string"
+              },
+              "quote": {
+                "type": "string"
+              },
+              "escape": {
+                "type": "string"
+              },
+              "trim": {
+                "type": "boolean"
+              },
+              "rtrim": {
+                "type": "boolean"
+              },
+              "ltrim": {
+                "type": "boolean"
+              }
+            }
+          },
+        "xlsxFileExport": {
+          "type": "string"
+        },
+        "xlsxAuthorName": {
+          "type": "string"
+        },
+        "xlsxSheetName": {
+          "type": "string"
+        },
+        "fileExport": {
+          "type": "string"
+        }
+      }
+    },
+    "params": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "command"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object"
+            },
+            "csvFileExport": {
+              "type": "string"
+            },
+            "xlsxFileExport": {
+              "type": "string"
+            },
+            "xlsxAuthorName": {
+              "type": "string"
+            },
+            "xlsxSheetName": {
+              "type": "string"
+            },
+            "fileExport": {
+              "type": "string"
+            },
+            "csvOptions": {
+              "type": "object",
+              "properties" :{
+                "objectMode": {
+                  "type": "boolean"
+                },
+                "headers": {
+                  "type": ["boolean", "array"]
+                },
+                "ignoreEmpty": {
+                  "type": "boolean"
+                },
+                "discardUnmappedColumns": {
+                  "type": "boolean"
+                },
+                "strictColumnHandling": {
+                  "type": "boolean"
+                },
+                "renameHeaders": {
+                  "type": "boolean"
+                },
+                "delimiter": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "escape": {
+                  "type": "string"
+                },
+                "trim": {
+                  "type": "boolean"
+                },
+                "rtrim": {
+                  "type": "boolean"
+                },
+                "ltrim": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "command_file"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "command_file": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object"
+            },
+            "csvFileExport": {
+              "type": "string"
+            },
+            "xlsxFileExport": {
+              "type": "string"
+            },
+            "xlsxAuthorName": {
+              "type": "string"
+            },
+            "xlsxSheetName": {
+              "type": "string"
+            },
+            "fileExport": {
+              "type": "string"
+            },
+            "csvOptions": {
+              "type": "object",
+              "properties" :{
+                "objectMode": {
+                  "type": "boolean"
+                },
+                "headers": {
+                  "type": ["boolean", "array"]
+                },
+                "ignoreEmpty": {
+                  "type": "boolean"
+                },
+                "discardUnmappedColumns": {
+                  "type": "boolean"
+                },
+                "strictColumnHandling": {
+                  "type": "boolean"
+                },
+                "renameHeaders": {
+                  "type": "boolean"
+                },
+                "delimiter": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "escape": {
+                  "type": "string"
+                },
+                "trim": {
+                  "type": "boolean"
+                },
+                "rtrim": {
+                  "type": "boolean"
+                },
+                "ltrim": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

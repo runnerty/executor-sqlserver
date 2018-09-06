@@ -1,0 +1,29 @@
+{
+  "name": "@runnerty/executor-sqlserver",
+  "version": "1.0.0",
+  "description": "Runnerty module: Microsoft SQL Server executor",
+  "author": "Coderty",
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/runnerty/executor-sqlserver.git"
+  },
+  "keywords": [
+    "runnerty",
+    "executor",
+    "db",
+    "sql",
+    "sqlserver",
+    "mssqlserver"
+  ],
+  "bugs": {
+    "url": "https://github.com/runnerty/executor-sqlserver/issues"
+  },
+  "homepage": "https://github.com/runnerty/executor-sqlserver#readme",
+  "dependencies": {
+    "exceljs": "^1.6.2",
+    "mssql": "^4.2.1",
+    "tedious": "^2.7.0"
+  }
+}
