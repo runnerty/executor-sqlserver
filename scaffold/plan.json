@@ -1,0 +1,61 @@
+{
+  "$schema": "https://raw.githubusercontent.com/runnerty/schemas/master/schemas/3.0/plan.json",
+  "chains": [
+    {
+      "id": "CHAIN_sqlserver_SAMPLES",
+      "name": "sqlserver module example chain",
+      "defaults_processes": {
+        "notifications": {
+          "on_start": [
+            {
+              "id": "console_default",
+              "message": "@GETDATE('YYYY-MM-DD HH:mm:ss') START: PROCESS @GV(PROCESS_ID)"
+            }
+          ],
+          "on_fail": [
+            {
+              "id": "console_default",
+              "message": "@GETDATE('YYYY-MM-DD HH:mm:ss') ERROR: PROCESS @GV(PROCESS_ID): @GV(PROCESS_EXEC_ERR_OUTPUT)",
+              "mode": "error"
+            }
+          ],
+          "on_end": [
+            {
+              "id": "console_default",
+              "message": "@GETDATE('YYYY-MM-DD HH:mm:ss') END: PROCESS @GV(PROCESS_ID)"
+            }
+          ]
+        }
+      },
+      "processes": [
+        {
+          "id": "sqlserver_SIMPLE",
+          "name": "sqlserver COMMAND SAMPLE",
+          "exec": {
+            "id": "sqlserver_default",
+            "command": "SELECT NOW()"
+          }
+        },
+        {
+          "id": "sqlserver_FILE",
+          "name": "sqlserver COMMAND FILE SAMPLE",
+          "exec": {
+            "id": "sqlserver_default",
+            "command_file": "./sql/test.sql"
+          }
+        },
+        {
+          "id": "sqlserver_OUTPUT FILES",
+          "name": "sqlserver OUTPUTS",
+          "exec": {
+            "id": "sqlserver_default",
+            "command": "SELECT TABLE_NAME, ENGINE, TABLE_ROWS, DATA_LENGTH, TABLE_COMMENT FROM information_schema.TABLES",
+            "xlsxFileExport": "./my_excel.xlsx",
+            "csvFileExport": "./my_csv.csv",
+            "fileExport": "./my_json.json"
+          }
+        }
+      ]
+    }
+  ]
+}

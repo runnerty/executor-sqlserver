@@ -27,70 +27,73 @@
         "host": {
           "type": "string"
         },
+        "port": {
+          "type": "string"
+        },
+        "socketPath": {
+          "type": "string"
+        },
+        "charset": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "insecureAuth": {
+          "type": "boolean"
+        },
         "debug": {
           "type": "boolean"
         },
-        "encrypt":{
-          "type": "boolean"
-        },
-        "noReturnDataOutput":{
-          "type": "boolean"
-        },
-        "csvFileExport": {
+        "flags": {
           "type": "string"
+        },
+        "multipleStatements": {
+          "type": "boolean"
+        },
+        "ssl": {
+          "type": "object"
+        },
+        "connectTimeout": {
+          "type": "number"
         },
         "csvOptions": {
           "type": "object",
-          "properties" :{
+          "properties": {
             "objectMode": {
               "type": "boolean"
-              },
-              "headers": {
-                "type": ["boolean", "array"]
-              },
-              "ignoreEmpty": {
-                "type": "boolean"
-              },
-              "discardUnmappedColumns": {
-                "type": "boolean"
-              },
-              "strictColumnHandling": {
-                "type": "boolean"
-              },
-              "renameHeaders": {
-                "type": "boolean"
-              },
-              "delimiter": {
-                "type": "string"
-              },
-              "quote": {
-                "type": "string"
-              },
-              "escape": {
-                "type": "string"
-              },
-              "trim": {
-                "type": "boolean"
-              },
-              "rtrim": {
-                "type": "boolean"
-              },
-              "ltrim": {
-                "type": "boolean"
-              }
+            },
+            "headers": {
+              "type": ["boolean", "array"]
+            },
+            "alwaysWriteHeaders": {
+              "type": "boolean"
+            },
+            "delimiter": {
+              "type": "string"
+            },
+            "rowDelimiter": {
+              "type": "string"
+            },
+            "quote": {
+              "type": "string"
+            },
+            "quoteColumns": {
+              "type": ["boolean", "string"]
+            },
+            "quoteHeaders": {
+              "type": ["boolean", "string"]
+            },
+            "escape": {
+              "type": "string"
+            },
+            "includeEndRowDelimiter": {
+              "type": "boolean"
+            },
+            "writeBOM": {
+              "type": "boolean"
             }
-          },
-        "xlsxFileExport": {
-          "type": "string"
-        },
-        "xlsxAuthorName": {
-          "type": "string"
-        },
-        "xlsxSheetName": {
-          "type": "string"
-        },
-        "fileExport": {
-          "type": "string"
+          }
         }
       }
     },
@@ -98,10 +101,7 @@
       "oneOf": [
         {
           "type": "object",
-          "required": [
-            "id",
-            "command"
-          ],
+          "required": ["id", "command"],
           "properties": {
             "id": {
               "type": "string"
@@ -127,55 +127,14 @@
             "fileExport": {
               "type": "string"
             },
-            "csvOptions": {
-              "type": "object",
-              "properties" :{
-                "objectMode": {
-                  "type": "boolean"
-                },
-                "headers": {
-                  "type": ["boolean", "array"]
-                },
-                "ignoreEmpty": {
-                  "type": "boolean"
-                },
-                "discardUnmappedColumns": {
-                  "type": "boolean"
-                },
-                "strictColumnHandling": {
-                  "type": "boolean"
-                },
-                "renameHeaders": {
-                  "type": "boolean"
-                },
-                "delimiter": {
-                  "type": "string"
-                },
-                "quote": {
-                  "type": "string"
-                },
-                "escape": {
-                  "type": "string"
-                },
-                "trim": {
-                  "type": "boolean"
-                },
-                "rtrim": {
-                  "type": "boolean"
-                },
-                "ltrim": {
-                  "type": "boolean"
-                }
-              }
+            "localInFile": {
+              "type": "string"
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "id",
-            "command_file"
-          ],
+          "required": ["id", "command_file"],
           "properties": {
             "id": {
               "type": "string"
@@ -201,43 +160,40 @@
             "fileExport": {
               "type": "string"
             },
+            "localInFile": {
+              "type": "string"
+            },
             "csvOptions": {
               "type": "object",
-              "properties" :{
-                "objectMode": {
-                  "type": "boolean"
-                },
+              "properties": {
                 "headers": {
                   "type": ["boolean", "array"]
                 },
-                "ignoreEmpty": {
-                  "type": "boolean"
-                },
-                "discardUnmappedColumns": {
-                  "type": "boolean"
-                },
-                "strictColumnHandling": {
-                  "type": "boolean"
-                },
-                "renameHeaders": {
+                "alwaysWriteHeaders": {
                   "type": "boolean"
                 },
                 "delimiter": {
                   "type": "string"
                 },
+                "rowDelimiter": {
+                  "type": "string"
+                },
                 "quote": {
                   "type": "string"
+                },
+                "quoteColumns": {
+                  "type": ["boolean", "string"]
+                },
+                "quoteHeaders": {
+                  "type": ["boolean", "string"]
                 },
                 "escape": {
                   "type": "string"
                 },
-                "trim": {
+                "includeEndRowDelimiter": {
                   "type": "boolean"
                 },
-                "rtrim": {
-                  "type": "boolean"
-                },
-                "ltrim": {
+                "writeBOM": {
                   "type": "boolean"
                 }
               }

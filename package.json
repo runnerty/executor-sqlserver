@@ -1,10 +1,14 @@
 {
   "name": "@runnerty/executor-sqlserver",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Runnerty module: Microsoft SQL Server executor",
-  "author": "Coderty",
+  "author": "Runnerty Tech",
   "license": "MIT",
   "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint '**/*.js' && prettier --check '**'"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/runnerty/executor-sqlserver.git"
@@ -12,18 +16,25 @@
   "keywords": [
     "runnerty",
     "executor",
-    "db",
-    "sql",
-    "sqlserver",
-    "mssqlserver"
+    "csv",
+    "excel",
+    "sqlserver"
   ],
   "bugs": {
     "url": "https://github.com/runnerty/executor-sqlserver/issues"
   },
   "homepage": "https://github.com/runnerty/executor-sqlserver#readme",
   "dependencies": {
-    "exceljs": "^1.6.2",
-    "mssql": "^4.2.1",
-    "tedious": "^2.7.0"
+    "@runnerty/module-core": "~3.0.5",
+    "exceljs": "~4.2.1",
+    "fast-csv": "~4.3.6",
+    "json-stream-stringify": "~2.0.3",
+    "mssql": "~6.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.23.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "prettier": "^2.2.1"
   }
 }

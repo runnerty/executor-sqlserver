@@ -1,0 +1,13 @@
+{
+  "executors": [
+    {
+      "id": "sqlserver_default",
+      "type": "@runnerty-executor-sqlserver",
+      "user": "sqlserverusr",
+      "password": "sqlserverpass",
+      "database": "sqlserver",
+      "host": "localhost",
+      "port": "3306"
+    }
+  ]
+}
