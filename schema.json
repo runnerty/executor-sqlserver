@@ -24,11 +24,11 @@
         "database": {
           "type": "string"
         },
-        "host": {
+        "server": {
           "type": "string"
         },
         "port": {
-          "type": "string"
+          "type": "number"
         },
         "socketPath": {
           "type": "string"
