@@ -63,7 +63,8 @@ class sqlServerExecutor extends Executor {
         arrayRowMode: true,
         stream: true,
         parseJSON: true,
-        options: { //TODO: Debe poder indicarse en CONFIG
+        //TODO: Añadir todos los posibles valores, indicados en schema:
+        options: {
           encrypt: false,
           enableArithAbort: true,
           trustServerCertificate: false
@@ -82,7 +83,6 @@ class sqlServerExecutor extends Executor {
       const request = await pool.request();
       request.stream = true;
 
-      // if (params.localInFile) await this.executeCopyFrom(pool, request, query, params); TODO: LOAD
       if (params.fileExport)
         await this.executeJSONFileExport(pool, request, query, params);
       if (params.xlsxFileExport)
@@ -107,14 +107,15 @@ class sqlServerExecutor extends Executor {
   async executeQuery(pool, request, query) {
     try {
       const results = await request.query(query);
-      this.prepareEndOptions(results.rows[0], results.rowCount, results.rows);
+      const firstRecordSet = results.recordset?results.recordset[0]:undefined;
+      this.prepareEndOptions(firstRecordSet, results.rowsAffected, results.recordsets);
       this._end(this.endOptions);
       pool.close();
     } catch (err) {
       this.error(err, request);
     }
   }
-  // COPY to JSON file:
+  // Query to JSON file:
   async executeJSONFileExport(pool, request, query, params) {
     try {
       request.query(query);
@@ -179,6 +180,7 @@ class sqlServerExecutor extends Executor {
         this.error(error, request);
         pool.close();
       });
+
       request.on('error', error => {
         pool.close();
         this.error(error, request);
@@ -200,11 +202,12 @@ class sqlServerExecutor extends Executor {
       });
 
       request.on('done', async () => {
-        await workbook.commit();
         this.prepareEndOptions(firstRow, rowCounter);
         this._end(this.endOptions);
         pool.close();
+        await workbook.commit();
       });
+
     } catch (err) {
       pool.close();
       this.error(err, request);
@@ -260,29 +263,6 @@ class sqlServerExecutor extends Executor {
     }
   }
 
-  // COPY FROM - LOAD DATA:
-  async executeCopyFrom(request, query, params) {
-    try {
-      await fsp.access(params.localInFile);
-      const resStream = await request.query(pgCopy.from(query));
-      const fileStreamReader = fs.createReadStream(params.localInFile);
-      fileStreamReader.on('error', error => {
-        this.error(error, request);
-      });
-      resStream.on('error', error => {
-        this.error(error, request);
-      });
-      resStream.on('finish', () => {
-        fileStreamReader.end();
-        this._end(this.endOptions);
-        request.release();
-      });
-      fileStreamReader.pipe(resStream);
-    } catch (error) {
-      this.error(error, request);
-    }
-  }
-
   error(err, request) {
     this.endOptions.end = "error";
     this.endOptions.messageLog = `execute-sqlserver: ${err}`;
@@ -325,19 +305,57 @@ class sqlServerExecutor extends Executor {
 
   prepareEndOptions(firstRow, rowCounter, results) {
     //STANDARD OUPUT:
-    this.endOptions.data_output = results || "";
+    if(Array.isArray(results)){
+      if(results[0]){
+        this.endOptions.data_output = results[0] || "";
+      }
+    }else{
+      this.endOptions.data_output = results || "";
+    }
 
     //EXTRA DATA OUTPUT:
     this.endOptions.extra_output = {};
-    this.endOptions.extra_output.db_countrows = rowCounter || "0";
+    if(Array.isArray(rowCounter)){
+      for (let i = 0; i < rowCounter.length; i++) { 
+        this.endOptions.extra_output[`db_countrows${i?`_${i}`:''}`] = rowCounter[i] || "0";
+      }
+    }else{
+      this.endOptions.extra_output.db_countrows = rowCounter || "0";
+    }
 
+    // EXTRA RESULTS TO DATA_OUTPUT:
+    if(Array.isArray(results)){
+      for (let i = 1; i < results.length; i++) { 
+        this.endOptions.extra_output[`data_output_${i}`] = JSON.stringify(results[i])|| "";
+      }
+    }
+
+    //FIRST ROW:
     this.endOptions.extra_output.db_firstRow = JSON.stringify(firstRow);
     if (firstRow instanceof Object) {
       const keys = Object.keys(firstRow);
       let keysLength = keys.length;
       while (keysLength--) {
         const key = keys[keysLength];
-        this.endOptions.extra_output["db_firstRow_" + key] = firstRow[key];
+        this.endOptions.extra_output[`db_firstRow_${key}`] = firstRow[key];
+      }
+    }
+
+    // EXTRA RESULTS TO FIRST ROW:
+    if(Array.isArray(results)){
+      for (let i = 1; i < results.length; i++) {
+        if(results[i][0]){
+          let _firstRow = results[i][0];
+          this.endOptions.extra_output[`db_firstRow_${i}`] = JSON.stringify(_firstRow);
+          if (_firstRow instanceof Object) {
+            const keys = Object.keys(_firstRow);
+            let keysLength = keys.length;
+            while (keysLength--) {
+              const key = keys[keysLength];
+              this.endOptions.extra_output[`db_firstRow_${i}_${key}`] = _firstRow[key];
+            }
+          }
+        }
       }
     }
   }
