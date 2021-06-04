@@ -181,149 +181,149 @@
             "useUTC": {
               "type": "boolean"
             }
-          },
-          "debug": {
-            "type": "boolean"
-          },
-          "csvOptions": {
-            "type": "object",
-            "properties": {
-              "objectMode": {
-                "type": "boolean"
-              },
-              "headers": {
-                "type": ["boolean", "array"]
-              },
-              "alwaysWriteHeaders": {
-                "type": "boolean"
-              },
-              "delimiter": {
-                "type": "string"
-              },
-              "rowDelimiter": {
-                "type": "string"
-              },
-              "quote": {
-                "type": "string"
-              },
-              "quoteColumns": {
-                "type": ["boolean", "string"]
-              },
-              "quoteHeaders": {
-                "type": ["boolean", "string"]
-              },
-              "escape": {
-                "type": "string"
-              },
-              "includeEndRowDelimiter": {
-                "type": "boolean"
-              },
-              "writeBOM": {
-                "type": "boolean"
-              }
+          }
+        },
+        "debug": {
+          "type": "boolean"
+        },
+        "csvOptions": {
+          "type": "object",
+          "properties": {
+            "objectMode": {
+              "type": "boolean"
+            },
+            "headers": {
+              "type": ["boolean", "array"]
+            },
+            "alwaysWriteHeaders": {
+              "type": "boolean"
+            },
+            "delimiter": {
+              "type": "string"
+            },
+            "rowDelimiter": {
+              "type": "string"
+            },
+            "quote": {
+              "type": "string"
+            },
+            "quoteColumns": {
+              "type": ["boolean", "string"]
+            },
+            "quoteHeaders": {
+              "type": ["boolean", "string"]
+            },
+            "escape": {
+              "type": "string"
+            },
+            "includeEndRowDelimiter": {
+              "type": "boolean"
+            },
+            "writeBOM": {
+              "type": "boolean"
             }
           }
         }
-      },
-      "params": {
-        "oneOf": [
-          {
-            "type": "object",
-            "required": ["id", "command"],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "command": {
-                "type": "string"
-              },
-              "args": {
-                "type": "object"
-              },
-              "csvFileExport": {
-                "type": "string"
-              },
-              "xlsxFileExport": {
-                "type": "string"
-              },
-              "xlsxAuthorName": {
-                "type": "string"
-              },
-              "xlsxSheetName": {
-                "type": "string"
-              },
-              "fileExport": {
-                "type": "string"
-              }
+      }
+    },
+    "params": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["id", "command"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object"
+            },
+            "csvFileExport": {
+              "type": "string"
+            },
+            "xlsxFileExport": {
+              "type": "string"
+            },
+            "xlsxAuthorName": {
+              "type": "string"
+            },
+            "xlsxSheetName": {
+              "type": "string"
+            },
+            "fileExport": {
+              "type": "string"
             }
-          },
-          {
-            "type": "object",
-            "required": ["id", "command_file"],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "command_file": {
-                "type": "string"
-              },
-              "args": {
-                "type": "object"
-              },
-              "csvFileExport": {
-                "type": "string"
-              },
-              "xlsxFileExport": {
-                "type": "string"
-              },
-              "xlsxAuthorName": {
-                "type": "string"
-              },
-              "xlsxSheetName": {
-                "type": "string"
-              },
-              "fileExport": {
-                "type": "string"
-              },
-              "csvOptions": {
-                "type": "object",
-                "properties": {
-                  "headers": {
-                    "type": ["boolean", "array"]
-                  },
-                  "alwaysWriteHeaders": {
-                    "type": "boolean"
-                  },
-                  "delimiter": {
-                    "type": "string"
-                  },
-                  "rowDelimiter": {
-                    "type": "string"
-                  },
-                  "quote": {
-                    "type": "string"
-                  },
-                  "quoteColumns": {
-                    "type": ["boolean", "string"]
-                  },
-                  "quoteHeaders": {
-                    "type": ["boolean", "string"]
-                  },
-                  "escape": {
-                    "type": "string"
-                  },
-                  "includeEndRowDelimiter": {
-                    "type": "boolean"
-                  },
-                  "writeBOM": {
-                    "type": "boolean"
-                  }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["id", "command_file"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "command_file": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object"
+            },
+            "csvFileExport": {
+              "type": "string"
+            },
+            "xlsxFileExport": {
+              "type": "string"
+            },
+            "xlsxAuthorName": {
+              "type": "string"
+            },
+            "xlsxSheetName": {
+              "type": "string"
+            },
+            "fileExport": {
+              "type": "string"
+            },
+            "csvOptions": {
+              "type": "object",
+              "properties": {
+                "headers": {
+                  "type": ["boolean", "array"]
+                },
+                "alwaysWriteHeaders": {
+                  "type": "boolean"
+                },
+                "delimiter": {
+                  "type": "string"
+                },
+                "rowDelimiter": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "quoteColumns": {
+                  "type": ["boolean", "string"]
+                },
+                "quoteHeaders": {
+                  "type": ["boolean", "string"]
+                },
+                "escape": {
+                  "type": "string"
+                },
+                "includeEndRowDelimiter": {
+                  "type": "boolean"
+                },
+                "writeBOM": {
+                  "type": "boolean"
                 }
               }
             }
           }
-        ]
-      }
+        }
+      ]
     }
   }
 }

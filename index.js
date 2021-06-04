@@ -1,21 +1,21 @@
-"use strict";
+'use strict';
 
-const sql = require("mssql");
-const JSONStream = require("JSONStream");
-const Excel = require("exceljs");
-const csv = require("fast-csv");
-const fs = require("fs");
-const fsp = require("fs").promises;
-const path = require("path");
+const sql = require('mssql');
+const JSONStream = require('JSONStream');
+const Excel = require('exceljs');
+const csv = require('fast-csv');
+const fs = require('fs');
+const fsp = require('fs').promises;
+const path = require('path');
 
-const Executor = require("@runnerty/module-core").Executor;
+const Executor = require('@runnerty/module-core').Executor;
 
 class sqlServerExecutor extends Executor {
   constructor(process) {
     super(process);
     this.ended = false;
     this.endOptions = {
-      end: "end",
+      end: 'end'
     };
   }
 
@@ -26,25 +26,28 @@ class sqlServerExecutor extends Executor {
         if (params.command_file) {
           // Load SQL file:
           try {
-            await fsp.access(
-              params.command_file,
-              fs.constants.F_OK | fs.constants.W_OK
-            );
-            params.command = await fsp.readFile(params.command_file, "utf8");
+            await fsp.access(params.command_file, fs.constants.F_OK | fs.constants.W_OK);
+            params.command = await fsp.readFile(params.command_file, 'utf8');
           } catch (err) {
             throw new Error(`Load SQLFile: ${err}`);
           }
         } else {
-          this.endOptions.end = "error";
-          this.endOptions.messageLog =
-            "execute-sqlserver dont have command or command_file";
-          this.endOptions.err_output =
-            "execute-sqlserver dont have command or command_file";
+          this.endOptions.end = 'error';
+          this.endOptions.messageLog = 'execute-sqlserver dont have command or command_file';
+          this.endOptions.err_output = 'execute-sqlserver dont have command or command_file';
           this._end(this.endOptions);
         }
       }
       const query = await this.prepareQuery(params);
       this.endOptions.command_executed = query;
+
+      const defaultOptions = {
+        encrypt: false,
+        enableArithAbort: true,
+        appName: 'Runnerty'
+      };
+
+      params.options = Object.assign(defaultOptions, params.options);
 
       const connectionConfig = {
         user: params.user,
@@ -58,23 +61,18 @@ class sqlServerExecutor extends Executor {
         pool: {
           max: params?.pool?.max || 10,
           min: params?.pool?.min || 0,
-          idleTimeoutMillis: params?.pool?.idleTimeoutMillis || 60000,
+          idleTimeoutMillis: params?.pool?.idleTimeoutMillis || 60000
         },
         arrayRowMode: true,
         stream: true,
         parseJSON: true,
-        //TODO: Añadir todos los posibles valores, indicados en schema:
-        options: {
-          encrypt: false,
-          enableArithAbort: true,
-          trustServerCertificate: false
-        },
+        options: params.options
       };
 
       const pool = await sql.connect(connectionConfig);
 
-      pool.on("error", (err) => {
-        this.endOptions.end = "error";
+      pool.on('error', err => {
+        this.endOptions.end = 'error';
         this.endOptions.messageLog = `execute-sqlserver: ${err}`;
         this.endOptions.err_output = `execute-sqlserver: ${err}`;
         this._end(this.endOptions);
@@ -83,18 +81,10 @@ class sqlServerExecutor extends Executor {
       const request = await pool.request();
       request.stream = true;
 
-      if (params.fileExport)
-        await this.executeJSONFileExport(pool, request, query, params);
-      if (params.xlsxFileExport)
-        await this.queryToXLSX(pool, request, query, params);
-      if (params.csvFileExport)
-        await this.queryToCSV(pool, request, query, params);
-      if (
-        !params.localInFile &&
-        !params.fileExport &&
-        !params.xlsxFileExport &&
-        !params.csvFileExport
-      ) {
+      if (params.fileExport) await this.executeJSONFileExport(pool, request, query, params);
+      if (params.xlsxFileExport) await this.queryToXLSX(pool, request, query, params);
+      if (params.csvFileExport) await this.queryToCSV(pool, request, query, params);
+      if (!params.localInFile && !params.fileExport && !params.xlsxFileExport && !params.csvFileExport) {
         request.stream = false;
         await this.executeQuery(pool, request, query);
       }
@@ -107,7 +97,7 @@ class sqlServerExecutor extends Executor {
   async executeQuery(pool, request, query) {
     try {
       const results = await request.query(query);
-      const firstRecordSet = results.recordset?results.recordset[0]:undefined;
+      const firstRecordSet = results.recordset ? results.recordset[0] : undefined;
       this.prepareEndOptions(firstRecordSet, results.rowsAffected, results.recordsets);
       this._end(this.endOptions);
       pool.close();
@@ -121,7 +111,7 @@ class sqlServerExecutor extends Executor {
       request.query(query);
       await fsp.access(path.dirname(params.fileExport));
       const fileStreamWriter = fs.createWriteStream(params.fileExport);
-      fileStreamWriter.on("error", (error) => {
+      fileStreamWriter.on('error', error => {
         this.error(error, request);
         pool.close();
       });
@@ -132,7 +122,7 @@ class sqlServerExecutor extends Executor {
         pool.close();
       });
 
-      request.on("error", (error) => {
+      request.on('error', error => {
         this.error(error, request);
         pool.close();
       });
@@ -141,8 +131,8 @@ class sqlServerExecutor extends Executor {
       let isFirstRow = true;
       let firstRow = {};
       let rowCounter = 0;
-      
-      request.on("row", (row) => {
+
+      request.on('row', row => {
         if (isFirstRow) {
           firstRow = row;
           isFirstRow = false;
@@ -156,7 +146,7 @@ class sqlServerExecutor extends Executor {
       this.error(error, request);
     }
   }
-  
+
   // Query to XLSX:
   async queryToXLSX(pool, request, query, params) {
     try {
@@ -190,8 +180,8 @@ class sqlServerExecutor extends Executor {
       let isFirstRow = true;
       let firstRow = {};
       let rowCounter = 0;
-      
-      request.on("row", (row) => {
+
+      request.on('row', row => {
         if (isFirstRow) {
           firstRow = row;
           sheet.columns = this.generateHeader(row);
@@ -207,7 +197,6 @@ class sqlServerExecutor extends Executor {
         pool.close();
         await workbook.commit();
       });
-
     } catch (err) {
       pool.close();
       this.error(err, request);
@@ -246,8 +235,8 @@ class sqlServerExecutor extends Executor {
       let isFirstRow = true;
       let firstRow = {};
       let rowCounter = 0;
-      
-      request.on("row", (row) => {
+
+      request.on('row', row => {
         if (isFirstRow) {
           firstRow = row;
           isFirstRow = false;
@@ -256,7 +245,6 @@ class sqlServerExecutor extends Executor {
       });
 
       request.pipe(csvStream).pipe(fileStreamWriter);
-
     } catch (err) {
       pool.close();
       this.error(err, request);
@@ -264,7 +252,7 @@ class sqlServerExecutor extends Executor {
   }
 
   error(err, request) {
-    this.endOptions.end = "error";
+    this.endOptions.end = 'error';
     this.endOptions.messageLog = `execute-sqlserver: ${err}`;
     this.endOptions.err_output = `execute-sqlserver: ${err}`;
     this._end(this.endOptions);
@@ -280,7 +268,7 @@ class sqlServerExecutor extends Executor {
       useExtraValue: values.args || false,
       useProcessValues: true,
       useGlobalValues: true,
-      altValueReplace: "null",
+      altValueReplace: 'null'
     };
 
     try {
@@ -297,7 +285,7 @@ class sqlServerExecutor extends Executor {
       columns.push({
         header: Object.keys(row)[i],
         key: Object.keys(row)[i],
-        width: 30,
+        width: 30
       });
     }
     return columns;
@@ -305,28 +293,28 @@ class sqlServerExecutor extends Executor {
 
   prepareEndOptions(firstRow, rowCounter, results) {
     //STANDARD OUPUT:
-    if(Array.isArray(results)){
-      if(results[0]){
-        this.endOptions.data_output = results[0] || "";
+    if (Array.isArray(results)) {
+      if (results[0]) {
+        this.endOptions.data_output = results[0] || '';
       }
-    }else{
-      this.endOptions.data_output = results || "";
+    } else {
+      this.endOptions.data_output = results || '';
     }
 
     //EXTRA DATA OUTPUT:
     this.endOptions.extra_output = {};
-    if(Array.isArray(rowCounter)){
-      for (let i = 0; i < rowCounter.length; i++) { 
-        this.endOptions.extra_output[`db_countrows${i?`_${i}`:''}`] = rowCounter[i] || "0";
+    if (Array.isArray(rowCounter)) {
+      for (let i = 0; i < rowCounter.length; i++) {
+        this.endOptions.extra_output[`db_countrows${i ? `_${i}` : ''}`] = rowCounter[i] || '0';
       }
-    }else{
-      this.endOptions.extra_output.db_countrows = rowCounter || "0";
+    } else {
+      this.endOptions.extra_output.db_countrows = rowCounter || '0';
     }
 
     // EXTRA RESULTS TO DATA_OUTPUT:
-    if(Array.isArray(results)){
-      for (let i = 1; i < results.length; i++) { 
-        this.endOptions.extra_output[`data_output_${i}`] = JSON.stringify(results[i])|| "";
+    if (Array.isArray(results)) {
+      for (let i = 1; i < results.length; i++) {
+        this.endOptions.extra_output[`data_output_${i}`] = JSON.stringify(results[i]) || '';
       }
     }
 
@@ -342,10 +330,10 @@ class sqlServerExecutor extends Executor {
     }
 
     // EXTRA RESULTS TO FIRST ROW:
-    if(Array.isArray(results)){
+    if (Array.isArray(results)) {
       for (let i = 1; i < results.length; i++) {
-        if(results[i][0]){
-          let _firstRow = results[i][0];
+        if (results[i][0]) {
+          const _firstRow = results[i][0];
           this.endOptions.extra_output[`db_firstRow_${i}`] = JSON.stringify(_firstRow);
           if (_firstRow instanceof Object) {
             const keys = Object.keys(_firstRow);

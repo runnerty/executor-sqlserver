@@ -10,7 +10,7 @@
 <img alt="code style: prettier" src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg">
 </a>
 
-# sqlserver executor for [Runnerty]:
+# Microsoft SQL Server executor for [Runnerty]:
 
 ### Installation:
 
@@ -20,18 +20,18 @@ Through NPM
 npm i @runnerty/executor-sqlserver
 ```
 
-You can also add modules to your project with [runnerty-cli]
+You can also add modules to your project with [runnerty]
 
 ```bash
-npx runnerty-cli add @runnerty/executor-sqlserver
+npx runnerty add @runnerty/executor-sqlserver
 ```
 
 This command installs the module in your project, adds example configuration in your `config.json` and creates an example plan of use.
 
-If you have installed [runnerty-cli] globally you can include the module with this command:
+If you have installed [runnerty] globally you can include the module with this command:
 
 ```bash
-rty add @runnerty/executor-sqlserver
+runnerty add @runnerty/executor-sqlserver
 ```
 
 ### Configuration:
@@ -42,11 +42,11 @@ Add in [config.json]:
 {
   "id": "sqlserver_default",
   "type": "@runnerty-executor-sqlserver",
-  "user": "sqlserverusr",
-  "password": "sqlserverpass",
-  "database": "MYDB",
-  "host": "myhost.com",
-  "port": "3306"
+  "user": "sa",
+  "password": "yourStrong(!)Password",
+  "database": "master",
+  "server": "localhost",
+  "port": 1433
 }
 ```
 
@@ -54,35 +54,33 @@ Add in [config.json]:
 {
   "id": "sqlserver_default",
   "type": "@runnerty-executor-sqlserver",
-  "user": "sqlserverusr",
-  "password": "sqlserverpass",
-  "database": "MYDB",
-  "host": "myhost.com",
-  "port": "3306",
-  "ssl": {
-    "ca": "./ssl/my.ca"
+  "user": "sa",
+  "password": "yourStrong(!)Password",
+  "database": "master",
+  "server": "localhost",
+  "port": 1433,
+  "options": {
+    "useUTC": true
   }
 }
 ```
 
 #### Configuration params:
 
-| Parameter          | Description                                                                                                 |
-| :----------------- | :---------------------------------------------------------------------------------------------------------- |
-| user               | The sqlserver user to authenticate as.                                                                          |
-| password           | The password of that sqlserver user.                                                                            |
-| database           | Name of the database to use for this connection. (Optional)                                                 |
-| host               | The hostname of the database you are connecting to.                                                         |
-| port               | The port number to connect to. (Default: 3306)                                                              |
-| socketPath         | The path to a unix domain socket to connect to. When used host and port are ignored. (Optional)             |
-| charset            | The charset for the connection (collation). (Default: 'UTF8_GENERAL_CI')                                    |
-| timezone           | The timezone configured on the sqlserver server. (Default: 'local')                                             |
-| insecureAuth       | Allow connecting to sqlserver instances that ask for the old (insecure) authentication method. (Default: false) |
-| flags              | Connection flags. More information [here](https://github.com/sqlserverjs/sqlserver#connection-flags).               |
-| multipleStatements | Allow multiple sqlserver statements per query. (Default: true)                                                  |
-| ssl/ca             | SSL CA File (Optional)                                                                                      |
-| ssl/cert           | SSL CERT File (Optional)                                                                                    |
-| ssl/key            | SSL KEY File (Optional)                                                                                     |
+| Parameter              | Description                                                                                                                              |
+| :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| user                   | The sqlserver user to authenticate as.                                                                                                   |
+| password               | The password of that sqlserver user.                                                                                                     |
+| database               | Name of the database to use for this connection. (Optional)                                                                              |
+| server                 | The hostname of the database you are connecting to.                                                                                      |
+| port                   | The port number to connect to. (Default: 3306)                                                                                           |
+| domain                 | Once you set domain, driver will connect to SQL Server using domain login.                                                               |
+| connectionTimeout      | Connection timeout in ms (default: 15000).                                                                                               |
+| requestTimeout         | Request timeout in ms (default: 15000).                                                                                                  |
+| pool.max               | The maximum number of connections there can be in the pool (default: 10).                                                                |
+| pool.min               | The minimum of connections there can be in the pool (default: 0).                                                                        |
+| pool.idleTimeoutMillis | The Number of milliseconds before closing an unused connection default: 30000).                                                          |
+| options                | get more information about the options in the module documentation [node-mssql](https://tediousjs.github.io/tedious/api-connection.html) |
 
 ### Plan sample:
 
@@ -219,5 +217,4 @@ For file upload you must indicate the path of the file to be loaded in the `loca
 [david-badge]: https://david-dm.org/runnerty/executor-sqlserver.svg
 [david-badge-url]: https://david-dm.org/runnerty/executor-sqlserver
 [config.json]: http://docs.runnerty.io/config/
-[runnerty-cli]: https://www.npmjs.com/package/runnerty-cli
 [plan.json]: http://docs.runnerty.io/plan/
