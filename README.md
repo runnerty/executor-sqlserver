@@ -26,7 +26,7 @@ You can also add modules to your project with [runnerty]
 npx runnerty add @runnerty/executor-sqlserver
 ```
 
-This command installs the module in your project, adds example configuration in your `config.json` and creates an example plan of use.
+This command installs the module in your project, adds example configuration in your [config.json] and creates an example plan of use.
 
 If you have installed [runnerty] globally you can include the module with this command:
 
@@ -119,7 +119,7 @@ Sample:
 
 ```json
 {
-  "id": "sqlserver_sample",
+  "id": "sqlserver_default",
   "command": "SELECT * FROM USERS",
   "xlsxFileExport": "./my_output.xlsx",
   "xlsxAuthorName": "Runnerty",
@@ -149,7 +149,7 @@ Sample:
 
 ```json
 {
-  "id": "sqlserver_sample",
+  "id": "sqlserver_default",
   "command": "SELECT * FROM USERS",
   "csvFileExport": "@GV(WORK_DIR)/users.csv",
   "csvOptions": {
@@ -181,7 +181,7 @@ For file upload you must indicate the path of the file to be loaded in the `loca
 
 ```json
 {
-  "id": "sqlserver_sample",
+  "id": "sqlserver_default",
   "command": "LOAD DATA LOCAL INFILE 'mystream' INTO TABLE DBSAMPLE.TABLESAMPLE FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'",
   "localInFile": "/sample.csv"
 }
@@ -201,14 +201,14 @@ For file upload you must indicate the path of the file to be loaded in the `loca
 - `PROCESS_EXEC_DB_FIRSTROW`: sqlserver query first row data.
 - `PROCESS_EXEC_DB_FIRSTROW_[FILED_NAME]`: sqlserver first row field data.
 
+If the process executes more than one query, it will be able to access its first row indicating its number in order, starting at zero. The first query corresponds to `PROCESS_EXEC_DB_FIRSTROW`, the next to `PROCESS_EXEC_DB_FIRSTROW_1` and so on.
+The same is true for the rest of the values.
+
 #### Operation output
 
-- `PROCESS_EXEC_DB_FIELDCOUNT`: sqlserver field count.
 - `PROCESS_EXEC_DB_AFFECTEDROWS`: sqlserver affected rows count.
-- `PROCESS_EXEC_DB_CHANGEDROWS`: sqlserver changed rows count.
-- `PROCESS_EXEC_DB_INSERTID`: sqlserver insert ID.
-- `PROCESS_EXEC_DB_WARNINGCOUNT`: sqlserver warning count.
-- `PROCESS_EXEC_DB_MESSAGE`: sqlserver message.
+
+If the process executes more than one operation, it will be able to access its first row indicating its number in order, starting at zero. The first operation corresponds to `PROCESS_EXEC_DB_AFFECTEDROWS`, the next to `PROCESS_EXEC_DB_AFFECTEDROWS_1` and so on.
 
 [runnerty]: http://www.runnerty.io
 [downloads-image]: https://img.shields.io/npm/dm/@runnerty/executor-sqlserver.svg
@@ -216,5 +216,5 @@ For file upload you must indicate the path of the file to be loaded in the `loca
 [npm-image]: https://img.shields.io/npm/v/@runnerty/executor-sqlserver.svg
 [david-badge]: https://david-dm.org/runnerty/executor-sqlserver.svg
 [david-badge-url]: https://david-dm.org/runnerty/executor-sqlserver
-[config.json]: http://docs.runnerty.io/config/
-[plan.json]: http://docs.runnerty.io/plan/
+[config.json]: https://docs.runnerty.io/config/
+[plan.json]: https://docs.runnerty.io/plan/

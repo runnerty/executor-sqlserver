@@ -35,7 +35,7 @@ class sqlServerExecutor extends Executor {
           this.endOptions.end = 'error';
           this.endOptions.messageLog = 'execute-sqlserver dont have command or command_file';
           this.endOptions.err_output = 'execute-sqlserver dont have command or command_file';
-          this._end(this.endOptions);
+          await this._end(this.endOptions);
         }
       }
       const query = await this.prepareQuery(params);
@@ -69,62 +69,62 @@ class sqlServerExecutor extends Executor {
         options: params.options
       };
 
-      const pool = await sql.connect(connectionConfig);
+      this.pool = await sql.connect(connectionConfig);
 
-      pool.on('error', err => {
+      this.pool.on('error', async err => {
         this.endOptions.end = 'error';
         this.endOptions.messageLog = `execute-sqlserver: ${err}`;
         this.endOptions.err_output = `execute-sqlserver: ${err}`;
-        this._end(this.endOptions);
+        await this._end(this.endOptions);
       });
 
-      const request = await pool.request();
+      const request = await this.pool.request();
       request.stream = true;
 
-      if (params.fileExport) await this.executeJSONFileExport(pool, request, query, params);
-      if (params.xlsxFileExport) await this.queryToXLSX(pool, request, query, params);
-      if (params.csvFileExport) await this.queryToCSV(pool, request, query, params);
-      if (!params.localInFile && !params.fileExport && !params.xlsxFileExport && !params.csvFileExport) {
+      if (params.fileExport) {
+        await this.executeJSONFileExport(request, query, params);
+      } else if (params.xlsxFileExport) {
+        await this.queryToXLSX(request, query, params);
+      } else if (params.csvFileExport) {
+        await this.queryToCSV(request, query, params);
+      } else if (!params.fileExport && !params.xlsxFileExport && !params.csvFileExport) {
         request.stream = false;
-        await this.executeQuery(pool, request, query);
+        await this.executeQuery(request, query);
       }
     } catch (error) {
       this.error(error);
+      this.pool.close();
     }
   }
 
   // Query to DATA_OUTPUT:
-  async executeQuery(pool, request, query) {
+  async executeQuery(request, query) {
     try {
       const results = await request.query(query);
       const firstRecordSet = results.recordset ? results.recordset[0] : undefined;
-      this.prepareEndOptions(firstRecordSet, results.rowsAffected, results.recordsets);
-      this._end(this.endOptions);
-      pool.close();
+      this.prepareEndOptions(firstRecordSet, undefined, results.rowsAffected, results.recordsets);
+      await this._end(this.endOptions);
     } catch (err) {
       this.error(err, request);
     }
   }
   // Query to JSON file:
-  async executeJSONFileExport(pool, request, query, params) {
+  async executeJSONFileExport(request, query, params) {
     try {
       request.query(query);
       await fsp.access(path.dirname(params.fileExport));
       const fileStreamWriter = fs.createWriteStream(params.fileExport);
       fileStreamWriter.on('error', error => {
         this.error(error, request);
-        pool.close();
       });
 
       request.on('done', async () => {
         this.prepareEndOptions(firstRow, rowCounter);
-        this._end(this.endOptions);
-        pool.close();
+        await this._end(this.endOptions);
       });
 
       request.on('error', error => {
         this.error(error, request);
-        pool.close();
       });
 
       // STREAMED
@@ -142,13 +142,12 @@ class sqlServerExecutor extends Executor {
 
       request.pipe(JSONStream.stringify()).pipe(fileStreamWriter);
     } catch (error) {
-      pool.close();
       this.error(error, request);
     }
   }
 
   // Query to XLSX:
-  async queryToXLSX(pool, request, query, params) {
+  async queryToXLSX(request, query, params) {
     try {
       request.query(query);
       await fsp.access(path.dirname(params.xlsxFileExport));
@@ -168,11 +167,9 @@ class sqlServerExecutor extends Executor {
 
       fileStreamWriter.on('error', error => {
         this.error(error, request);
-        pool.close();
       });
 
       request.on('error', error => {
-        pool.close();
         this.error(error, request);
       });
 
@@ -193,17 +190,15 @@ class sqlServerExecutor extends Executor {
 
       request.on('done', async () => {
         this.prepareEndOptions(firstRow, rowCounter);
-        this._end(this.endOptions);
-        pool.close();
+        await this._end(this.endOptions);
         await workbook.commit();
       });
     } catch (err) {
-      pool.close();
       this.error(err, request);
     }
   }
   // Query to CSV:
-  async queryToCSV(pool, request, query, params) {
+  async queryToCSV(request, query, params) {
     try {
       request.query(query);
       await fsp.access(path.dirname(params.csvFileExport));
@@ -217,17 +212,14 @@ class sqlServerExecutor extends Executor {
 
       fileStreamWriter.on('error', error => {
         this.error(error, request);
-        pool.close();
       });
 
       request.on('done', async () => {
         this.prepareEndOptions(firstRow, rowCounter);
-        this._end(this.endOptions);
-        pool.close();
+        await this._end(this.endOptions);
       });
 
       request.on('error', error => {
-        pool.close();
         this.error(error, request);
       });
 
@@ -246,20 +238,20 @@ class sqlServerExecutor extends Executor {
 
       request.pipe(csvStream).pipe(fileStreamWriter);
     } catch (err) {
-      pool.close();
       this.error(err, request);
     }
   }
 
-  error(err, request) {
+  async error(err, request) {
     this.endOptions.end = 'error';
     this.endOptions.messageLog = `execute-sqlserver: ${err}`;
     this.endOptions.err_output = `execute-sqlserver: ${err}`;
-    this._end(this.endOptions);
+    await this._end(this.endOptions);
   }
 
-  _end(endOptions) {
-    if (!this.ended) this.end(endOptions);
+  async _end(endOptions) {
+    if (!this.ended) await this.end(endOptions);
+    this.pool.close();
     this.ended = true;
   }
 
@@ -291,7 +283,7 @@ class sqlServerExecutor extends Executor {
     return columns;
   }
 
-  prepareEndOptions(firstRow, rowCounter, results) {
+  prepareEndOptions(firstRow, rowCounter, rowsAffected, results) {
     //STANDARD OUPUT:
     if (Array.isArray(results)) {
       if (results[0]) {
@@ -302,13 +294,22 @@ class sqlServerExecutor extends Executor {
     }
 
     //EXTRA DATA OUTPUT:
+    // COUNTROWS:
     this.endOptions.extra_output = {};
     if (Array.isArray(rowCounter)) {
       for (let i = 0; i < rowCounter.length; i++) {
-        this.endOptions.extra_output[`db_countrows${i ? `_${i}` : ''}`] = rowCounter[i] || '0';
+        this.endOptions.extra_output[`db_countRows${i ? `_${i}` : ''}`] = rowCounter[i] || '0';
       }
     } else {
-      this.endOptions.extra_output.db_countrows = rowCounter || '0';
+      this.endOptions.extra_output.db_countRows = rowCounter || '0';
+    }
+    // AFFECTEDROWS:
+    if (Array.isArray(rowsAffected)) {
+      for (let i = 0; i < rowsAffected.length; i++) {
+        this.endOptions.extra_output[`db_affectedRows${i ? `_${i}` : ''}`] = rowsAffected[i] || '0';
+      }
+    } else {
+      this.endOptions.extra_output.db_affectedRows = rowsAffected || '0';
     }
 
     // EXTRA RESULTS TO DATA_OUTPUT:

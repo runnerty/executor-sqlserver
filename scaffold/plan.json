@@ -1,9 +1,9 @@
 {
-  "$schema": "https://raw.githubusercontent.com/runnerty/schemas/master/schemas/3.0/plan.json",
+  "$schema": "https://raw.githubusercontent.com/runnerty/schemas/master/schemas/3.2/plan.json",
   "chains": [
     {
-      "id": "CHAIN_sqlserver_SAMPLES",
-      "name": "sqlserver module example chain",
+      "id": "CHAIN_SQLSERVER_SAMPLES",
+      "name": "Microsoft SQL Server Executor Samples",
       "defaults_processes": {
         "notifications": {
           "on_start": [
@@ -22,34 +22,36 @@
           "on_end": [
             {
               "id": "console_default",
-              "message": "@GETDATE('YYYY-MM-DD HH:mm:ss') END: PROCESS @GV(PROCESS_ID)"
+              "message": "@GETDATE('YYYY-MM-DD HH:mm:ss') END: PROCESS @GV(PROCESS_ID)\nCOUNTROWS: @GV(PROCESS_EXEC_DB_COUNTROWS)\nAFFECTEDROWS: @GV(PROCESS_EXEC_DB_AFFECTEDROWS)\nFIRSTROW_NAME:@GV(PROCESS_EXEC_DB_FIRSTROW_NAME)\nDATA_OUTPUT:@GV(PROCESS_EXEC_DATA_OUTPUT)"
             }
           ]
         }
       },
       "processes": [
         {
-          "id": "sqlserver_SIMPLE",
-          "name": "sqlserver COMMAND SAMPLE",
+          "id": "SIMPLE_QUERY",
+          "name": "Simple query",
           "exec": {
             "id": "sqlserver_default",
-            "command": "SELECT NOW()"
+            "command": "select GETDATE() as 'CURRENT_DATE';"
           }
         },
         {
-          "id": "sqlserver_FILE",
-          "name": "sqlserver COMMAND FILE SAMPLE",
+          "id": "SIMPLE_QUERY_FROM_FILE",
+          "name": "Simple query from file",
+          "depends_process": ["SIMPLE_QUERY"],
           "exec": {
             "id": "sqlserver_default",
             "command_file": "./sql/test.sql"
           }
         },
         {
-          "id": "sqlserver_OUTPUT FILES",
-          "name": "sqlserver OUTPUTS",
+          "id": "EXPORT_TO_FILES",
+          "name": "Sample exports data to files",
+          "depends_process": ["SIMPLE_QUERY_FROM_FILE"],
           "exec": {
             "id": "sqlserver_default",
-            "command": "SELECT TABLE_NAME, ENGINE, TABLE_ROWS, DATA_LENGTH, TABLE_COMMENT FROM information_schema.TABLES",
+            "command": "select s.name as schema_name, s.schema_id, u.name as schema_owner from sys.schemas s inner join sys.sysusers u on u.uid = s.principal_id;",
             "xlsxFileExport": "./my_excel.xlsx",
             "csvFileExport": "./my_csv.csv",
             "fileExport": "./my_json.json"
