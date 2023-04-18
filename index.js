@@ -63,7 +63,7 @@ class sqlServerExecutor extends Executor {
           min: params?.pool?.min || 0,
           idleTimeoutMillis: params?.pool?.idleTimeoutMillis || 60000
         },
-        arrayRowMode: true,
+        arrayRowMode: false,
         stream: true,
         parseJSON: true,
         options: params.options
@@ -93,7 +93,6 @@ class sqlServerExecutor extends Executor {
       }
     } catch (error) {
       this.error(error);
-      this.pool.close();
     }
   }
 
@@ -251,7 +250,7 @@ class sqlServerExecutor extends Executor {
 
   async _end(endOptions) {
     if (!this.ended) await this.end(endOptions);
-    this.pool.close();
+    this.pool?.close();
     this.ended = true;
   }
 
