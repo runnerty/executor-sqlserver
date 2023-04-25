@@ -175,15 +175,13 @@ Sample:
 
 ### Loading files:
 
-For file upload you must indicate the path of the file to be loaded in the `localInFile` parameter and in the `LOAD DATA LOCAL INFILE` statement you must indicate `mystream`. For example:
-
-- `localInFile`: Plain file path
+For file upload you must indicate the path of the csv file to be loaded in the `localInFile` parameter and the name of the table to load the data into in the `tableName` parameter. For example:
 
 ```json
 {
   "id": "sqlserver_default",
-  "command": "LOAD DATA LOCAL INFILE 'mystream' INTO TABLE DBSAMPLE.TABLESAMPLE FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'",
   "localInFile": "/sample.csv"
+  "tableName": "dbo.TABLE_NAME"
 }
 ```
 

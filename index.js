@@ -22,24 +22,29 @@ class sqlServerExecutor extends Executor {
   async exec(params) {
     // MAIN:
     try {
-      if (!params.command) {
-        if (params.command_file) {
-          // Load SQL file:
-          try {
-            await fsp.access(params.command_file, fs.constants.F_OK | fs.constants.W_OK);
-            params.command = await fsp.readFile(params.command_file, 'utf8');
-          } catch (err) {
-            throw new Error(`Load SQLFile: ${err}`);
-          }
-        } else {
-          this.endOptions.end = 'error';
-          this.endOptions.messageLog = 'execute-sqlserver dont have command or command_file';
-          this.endOptions.err_output = 'execute-sqlserver dont have command or command_file';
-          await this._end(this.endOptions);
+      if (!params.command && !params.command_file && !params.localInFile) {
+        this.endOptions.end = 'error';
+        this.endOptions.messageLog = 'execute-sqlserver dont have command or command_file or localInFile';
+        this.endOptions.err_output = 'execute-sqlserver dont have command or command_file or localInFile';
+        await this._end(this.endOptions);
+      }
+
+      if (params.command_file) {
+        // Load SQL file:
+        try {
+          await fsp.access(params.command_file, fs.constants.F_OK | fs.constants.W_OK);
+          params.command = await fsp.readFile(params.command_file, 'utf8');
+        } catch (err) {
+          throw new Error(`Load SQLFile: ${err}`);
         }
       }
+
       const query = await this.prepareQuery(params);
       this.endOptions.command_executed = query;
+
+      if (params.csvOptions) {
+        if (!params.csvOptions.hasOwnProperty('headers')) params.csvOptions.headers = true;
+      }
 
       const defaultOptions = {
         encrypt: false,
@@ -49,6 +54,9 @@ class sqlServerExecutor extends Executor {
 
       params.options = Object.assign(defaultOptions, params.options);
 
+      /**
+       * @type sql.config
+       */
       const connectionConfig = {
         user: params.user,
         password: params.password,
@@ -81,14 +89,19 @@ class sqlServerExecutor extends Executor {
       const request = await this.pool.request();
       request.stream = true;
 
-      if (params.fileExport) {
+      if (params.localInFile) {
+        if (fs.existsSync(params.localInFile)) {
+          await this.csvToBulkInsert(request, params);
+        } else {
+          throw new Error(`execute-sqlserver - localInFile not exists: ${params.localInFile}`);
+        }
+      } else if (params.fileExport) {
         await this.executeJSONFileExport(request, query, params);
       } else if (params.xlsxFileExport) {
         await this.queryToXLSX(request, query, params);
       } else if (params.csvFileExport) {
         await this.queryToCSV(request, query, params);
       } else if (!params.fileExport && !params.xlsxFileExport && !params.csvFileExport) {
-        request.stream = false;
         await this.executeQuery(request, query);
       }
     } catch (error) {
@@ -99,6 +112,7 @@ class sqlServerExecutor extends Executor {
   // Query to DATA_OUTPUT:
   async executeQuery(request, query) {
     try {
+      request.stream = false;
       const results = await request.query(query);
       const firstRecordSet = results.recordset ? results.recordset[0] : undefined;
       this.prepareEndOptions(firstRecordSet, undefined, results.rowsAffected, results.recordsets);
@@ -236,6 +250,49 @@ class sqlServerExecutor extends Executor {
       });
 
       request.pipe(csvStream).pipe(fileStreamWriter);
+    } catch (err) {
+      this.error(err, request);
+    }
+  }
+
+  // CSV to BULK INSERT:
+  async csvToBulkInsert(request, params) {
+    try {
+      request.stream = false;
+
+      const query = await this.prepareQuery({
+        command: `SELECT TOP(0) * FROM @GV('TABLE_NAME')`,
+        args: { TABLE_NAME: params.tableName }
+      });
+
+      const table = (await request.query(query)).recordset.toTable(params.tableName);
+
+      const paramsCSV = params.csvOptions || {};
+      if (!paramsCSV.hasOwnProperty('headers')) paramsCSV.headers = true;
+
+      await new Promise((resolve, reject) => {
+        csv
+          .parseFile(params.localInFile, paramsCSV)
+          .on('error', err => {
+            reject(err);
+          })
+          .on('data', row => {
+            table.rows.add(
+              ...Object.values(row).map(value => {
+                return value.toLowerCase() === 'null' ? null : value;
+              })
+            );
+          })
+          .on('end', async () => {
+            resolve();
+          });
+      });
+
+      const bulkResult = await request.bulk(table);
+
+      this.endOptions.command_executed = 'BULK INSERT';
+      this.prepareEndOptions(null, null, bulkResult.rowsAffected);
+      await this._end(this.endOptions);
     } catch (err) {
       this.error(err, request);
     }
