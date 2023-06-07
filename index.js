@@ -1,6 +1,7 @@
 'use strict';
 
 const sql = require('mssql');
+const createTunnel = require('tunnel-ssh').createTunnel;
 const JSONStream = require('JSONStream');
 const Excel = require('exceljs');
 const csv = require('fast-csv');
@@ -60,7 +61,7 @@ class sqlServerExecutor extends Executor {
         user: params.user,
         password: params.password,
         server: params.server,
-        port: params.port,
+        port: Number(params.port) || 1433,
         domain: params.domain,
         database: params.database,
         connectionTimeout: params.connectionTimeout,
@@ -75,6 +76,42 @@ class sqlServerExecutor extends Executor {
         parseJSON: true,
         options: params.options
       };
+
+      if (params.ssh) {
+        const srcHost = params.ssh.srcHost || '127.0.0.1';
+        const srcPort = Number(params.ssh.srcPort) || connectionConfig.port;
+
+        const tunnelOptions = {
+          autoClose: false
+        };
+
+        const serverOptions = {
+          host: srcHost,
+          port: srcPort
+        };
+
+        const sshOptions = {
+          host: params.ssh.host,
+          port: Number(params.ssh.port) || 22,
+          username: params.ssh.username,
+          password: params.ssh.password,
+          privateKey: params.ssh.privateKey ? fs.readFileSync(params.ssh.privateKey) : undefined,
+          passphrase: params.ssh.passphrase
+        };
+
+        const forwardOptions = {
+          srcAddr: srcHost,
+          srcPort: srcPort,
+          dstAddr: connectionConfig.server,
+          dstPort: connectionConfig.port
+        };
+
+        [this.tunnel] = await createTunnel(tunnelOptions, serverOptions, sshOptions, forwardOptions);
+
+        // Overwrites the database configuration to use SSH tunneling
+        connectionConfig.server = srcHost;
+        connectionConfig.port = srcPort;
+      }
 
       this.pool = await sql.connect(connectionConfig);
 
@@ -301,6 +338,7 @@ class sqlServerExecutor extends Executor {
 
   async _end(endOptions) {
     if (!this.ended) await this.end(endOptions);
+    this.tunnel?.close();
     this.pool?.close();
     this.ended = true;
   }

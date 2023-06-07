@@ -80,6 +80,14 @@ Add in [config.json]:
 | pool.max               | The maximum number of connections there can be in the pool (default: 10).                                                                |
 | pool.min               | The minimum of connections there can be in the pool (default: 0).                                                                        |
 | pool.idleTimeoutMillis | The Number of milliseconds before closing an unused connection default: 30000).                                                          |
+| ssh.host               | Hostname or IP address of the ssh server.                                                                                                |
+| ssh.port               | Port number of the ssh server.                                                                                                           |
+| ssh.username           | Username for authentication on the ssh server.                                                                                           |
+| ssh.password           | Password for password-based user authentication on the ssh server.                                                                       |
+| ssh.privateKey         | Buffer or string that contains a private key for either key-based or hostbased user authentication (OpenSSH format).                     |
+| ssh.passphrase         | For an encrypted private key, this is the passphrase used to decrypt it.                                                                 |
+| ssh.srcHost            | Hostname or IP address of the source server for outbound forwarding.                                                                     |
+| ssh.srcPort            | Port number of the source server for outbound forwarding.                                                                                |
 | options                | get more information about the options in the module documentation [node-mssql](https://tediousjs.github.io/tedious/api-connection.html) |
 
 ### Plan sample:

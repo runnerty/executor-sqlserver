@@ -22,7 +22,7 @@
           "type": "string"
         },
         "port": {
-          "type": "number"
+          "type": "string"
         },
         "domain": {
           "type": "string"
@@ -35,6 +35,30 @@
         },
         "requestTimeout": {
           "type": "number"
+        },
+        "ssh": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "srcHost": {
+            "type": "string"
+          },
+          "srcPort": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "privateKey": {
+            "type": "string"
+          },
+          "passphrase": { "type": "string" }
         },
         "pool": {
           "type": "object",
