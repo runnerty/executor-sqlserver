@@ -1,6 +1,7 @@
 'use strict';
 
 const sql = require('mssql');
+const createTunnel = require('tunnel-ssh').createTunnel;
 const JSONStream = require('JSONStream');
 const Excel = require('exceljs');
 const csv = require('fast-csv');
@@ -22,24 +23,28 @@ class sqlServerExecutor extends Executor {
   async exec(params) {
     // MAIN:
     try {
-      if (!params.command) {
-        if (params.command_file) {
-          // Load SQL file:
-          try {
-            await fsp.access(params.command_file, fs.constants.F_OK | fs.constants.W_OK);
-            params.command = await fsp.readFile(params.command_file, 'utf8');
-          } catch (err) {
-            throw new Error(`Load SQLFile: ${err}`);
-          }
-        } else {
-          this.endOptions.end = 'error';
-          this.endOptions.messageLog = 'execute-sqlserver dont have command or command_file';
-          this.endOptions.err_output = 'execute-sqlserver dont have command or command_file';
-          await this._end(this.endOptions);
+      if (!params.command && !params.command_file && !params.localInFile) {
+        this.endOptions.end = 'error';
+        this.endOptions.messageLog = 'execute-sqlserver dont have command or command_file or localInFile';
+        this.endOptions.err_output = 'execute-sqlserver dont have command or command_file or localInFile';
+        await this._end(this.endOptions);
+      }
+
+      if (params.command_file) {
+        // Load SQL file:
+        try {
+          await fsp.access(params.command_file, fs.constants.F_OK | fs.constants.W_OK);
+          params.command = await fsp.readFile(params.command_file, 'utf8');
+        } catch (err) {
+          throw new Error(`Load SQLFile: ${err}`);
         }
       }
+
       const query = await this.prepareQuery(params);
       this.endOptions.command_executed = query;
+
+      params.csvOptions = params.csvOptions ?? {};
+      if (!params.csvOptions.hasOwnProperty('headers')) params.csvOptions.headers = true;
 
       const defaultOptions = {
         encrypt: false,
@@ -49,11 +54,14 @@ class sqlServerExecutor extends Executor {
 
       params.options = Object.assign(defaultOptions, params.options);
 
+      /**
+       * @type sql.config
+       */
       const connectionConfig = {
         user: params.user,
         password: params.password,
         server: params.server,
-        port: params.port,
+        port: Number(params.port) || 1433,
         domain: params.domain,
         database: params.database,
         connectionTimeout: params.connectionTimeout,
@@ -63,11 +71,47 @@ class sqlServerExecutor extends Executor {
           min: params?.pool?.min || 0,
           idleTimeoutMillis: params?.pool?.idleTimeoutMillis || 60000
         },
-        arrayRowMode: true,
+        arrayRowMode: false,
         stream: true,
         parseJSON: true,
         options: params.options
       };
+
+      if (params.ssh) {
+        const srcHost = params.ssh.srcHost || '127.0.0.1';
+        const srcPort = Number(params.ssh.srcPort) || connectionConfig.port;
+
+        const tunnelOptions = {
+          autoClose: false
+        };
+
+        const serverOptions = {
+          host: srcHost,
+          port: srcPort
+        };
+
+        const sshOptions = {
+          host: params.ssh.host,
+          port: Number(params.ssh.port) || 22,
+          username: params.ssh.username,
+          password: params.ssh.password,
+          privateKey: params.ssh.privateKey ? fs.readFileSync(params.ssh.privateKey) : undefined,
+          passphrase: params.ssh.passphrase
+        };
+
+        const forwardOptions = {
+          srcAddr: srcHost,
+          srcPort: srcPort,
+          dstAddr: connectionConfig.server,
+          dstPort: connectionConfig.port
+        };
+
+        [this.tunnel] = await createTunnel(tunnelOptions, serverOptions, sshOptions, forwardOptions);
+
+        // Overwrites the database configuration to use SSH tunneling
+        connectionConfig.server = srcHost;
+        connectionConfig.port = srcPort;
+      }
 
       this.pool = await sql.connect(connectionConfig);
 
@@ -81,31 +125,36 @@ class sqlServerExecutor extends Executor {
       const request = await this.pool.request();
       request.stream = true;
 
-      if (params.fileExport) {
+      if (params.localInFile) {
+        if (fs.existsSync(params.localInFile)) {
+          await this.csvToBulkInsert(request, params);
+        } else {
+          throw new Error(`execute-sqlserver - localInFile not exists: ${params.localInFile}`);
+        }
+      } else if (params.fileExport) {
         await this.executeJSONFileExport(request, query, params);
       } else if (params.xlsxFileExport) {
         await this.queryToXLSX(request, query, params);
       } else if (params.csvFileExport) {
         await this.queryToCSV(request, query, params);
       } else if (!params.fileExport && !params.xlsxFileExport && !params.csvFileExport) {
-        request.stream = false;
         await this.executeQuery(request, query);
       }
     } catch (error) {
       this.error(error);
-      this.pool.close();
     }
   }
 
   // Query to DATA_OUTPUT:
   async executeQuery(request, query) {
     try {
+      request.stream = false;
       const results = await request.query(query);
       const firstRecordSet = results.recordset ? results.recordset[0] : undefined;
       this.prepareEndOptions(firstRecordSet, undefined, results.rowsAffected, results.recordsets);
       await this._end(this.endOptions);
     } catch (err) {
-      this.error(err, request);
+      this.error(err);
     }
   }
   // Query to JSON file:
@@ -115,7 +164,7 @@ class sqlServerExecutor extends Executor {
       await fsp.access(path.dirname(params.fileExport));
       const fileStreamWriter = fs.createWriteStream(params.fileExport);
       fileStreamWriter.on('error', error => {
-        this.error(error, request);
+        this.error(error);
       });
 
       request.on('done', async () => {
@@ -124,7 +173,7 @@ class sqlServerExecutor extends Executor {
       });
 
       request.on('error', error => {
-        this.error(error, request);
+        this.error(error);
       });
 
       // STREAMED
@@ -142,7 +191,7 @@ class sqlServerExecutor extends Executor {
 
       request.pipe(JSONStream.stringify()).pipe(fileStreamWriter);
     } catch (error) {
-      this.error(error, request);
+      this.error(error);
     }
   }
 
@@ -166,11 +215,11 @@ class sqlServerExecutor extends Executor {
       workbook.lastPrinted = new Date();
 
       fileStreamWriter.on('error', error => {
-        this.error(error, request);
+        this.error(error);
       });
 
       request.on('error', error => {
-        this.error(error, request);
+        this.error(error);
       });
 
       // STREAMED
@@ -194,7 +243,7 @@ class sqlServerExecutor extends Executor {
         await workbook.commit();
       });
     } catch (err) {
-      this.error(err, request);
+      this.error(err);
     }
   }
   // Query to CSV:
@@ -204,14 +253,12 @@ class sqlServerExecutor extends Executor {
       await fsp.access(path.dirname(params.csvFileExport));
       const fileStreamWriter = fs.createWriteStream(params.csvFileExport);
 
-      const paramsCSV = params.csvOptions || {};
-      if (!paramsCSV.hasOwnProperty('headers')) paramsCSV.headers = true;
-      const csvStream = csv.format(paramsCSV).on('error', err => {
-        this.error(err, request);
+      const csvStream = csv.format(params.csvOptions).on('error', err => {
+        this.error(err);
       });
 
       fileStreamWriter.on('error', error => {
-        this.error(error, request);
+        this.error(error);
       });
 
       request.on('done', async () => {
@@ -220,7 +267,7 @@ class sqlServerExecutor extends Executor {
       });
 
       request.on('error', error => {
-        this.error(error, request);
+        this.error(error);
       });
 
       // STREAMED
@@ -238,11 +285,51 @@ class sqlServerExecutor extends Executor {
 
       request.pipe(csvStream).pipe(fileStreamWriter);
     } catch (err) {
-      this.error(err, request);
+      this.error(err);
     }
   }
 
-  async error(err, request) {
+  // CSV to BULK INSERT:
+  async csvToBulkInsert(request, params) {
+    try {
+      request.stream = false;
+
+      const query = await this.prepareQuery({
+        command: `SELECT TOP(0) * FROM @GV('TABLE_NAME')`,
+        args: { TABLE_NAME: params.tableName }
+      });
+
+      const table = (await request.query(query)).recordset.toTable(params.tableName);
+
+      await new Promise((resolve, reject) => {
+        csv
+          .parseFile(params.localInFile, params.csvOptions)
+          .on('error', err => {
+            reject(err);
+          })
+          .on('data', row => {
+            table.rows.add(
+              ...Object.values(row).map(value => {
+                return value.toLowerCase() === 'null' ? null : value;
+              })
+            );
+          })
+          .on('end', () => {
+            resolve();
+          });
+      });
+
+      const bulkResult = await request.bulk(table);
+
+      this.endOptions.command_executed = 'BULK INSERT';
+      this.prepareEndOptions(null, null, bulkResult.rowsAffected);
+      await this._end(this.endOptions);
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async error(err) {
     this.endOptions.end = 'error';
     this.endOptions.messageLog = `execute-sqlserver: ${err}`;
     this.endOptions.err_output = `execute-sqlserver: ${err}`;
@@ -251,7 +338,8 @@ class sqlServerExecutor extends Executor {
 
   async _end(endOptions) {
     if (!this.ended) await this.end(endOptions);
-    this.pool.close();
+    this.tunnel?.close();
+    this.pool?.close();
     this.ended = true;
   }
 

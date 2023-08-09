@@ -22,7 +22,7 @@
           "type": "string"
         },
         "port": {
-          "type": "number"
+          "type": "string"
         },
         "domain": {
           "type": "string"
@@ -35,6 +35,30 @@
         },
         "requestTimeout": {
           "type": "number"
+        },
+        "ssh": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "srcHost": {
+            "type": "string"
+          },
+          "srcPort": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "privateKey": {
+            "type": "string"
+          },
+          "passphrase": { "type": "string" }
         },
         "pool": {
           "type": "object",
@@ -289,6 +313,80 @@
             "csvOptions": {
               "type": "object",
               "properties": {
+                "objectMode": {
+                  "type": "boolean"
+                },
+                "headers": {
+                  "type": ["boolean", "array"]
+                },
+                "alwaysWriteHeaders": {
+                  "type": "boolean"
+                },
+                "delimiter": {
+                  "type": "string"
+                },
+                "rowDelimiter": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "quoteColumns": {
+                  "type": ["boolean", "string"]
+                },
+                "quoteHeaders": {
+                  "type": ["boolean", "string"]
+                },
+                "escape": {
+                  "type": "string"
+                },
+                "includeEndRowDelimiter": {
+                  "type": "boolean"
+                },
+                "writeBOM": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["id", "localInFile", "tableName"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "localInFile": {
+              "type": "string"
+            },
+            "tableName": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object"
+            },
+            "csvFileExport": {
+              "type": "string"
+            },
+            "xlsxFileExport": {
+              "type": "string"
+            },
+            "xlsxAuthorName": {
+              "type": "string"
+            },
+            "xlsxSheetName": {
+              "type": "string"
+            },
+            "fileExport": {
+              "type": "string"
+            },
+            "csvOptions": {
+              "type": "object",
+              "properties": {
+                "objectMode": {
+                  "type": "boolean"
+                },
                 "headers": {
                   "type": ["boolean", "array"]
                 },
